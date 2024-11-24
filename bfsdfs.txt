@@ -1,0 +1,193 @@
+//DFS : 
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_VERTICES 100
+
+// DFS function
+int dfs(int graph[MAX_VERTICES][MAX_VERTICES], int numVertices, int vertex, int visited[MAX_VERTICES], int goal) {
+    printf("%d ", vertex);
+    visited[vertex] = 1;
+
+    if (vertex == goal) {
+        printf("\nGoal vertex %d found.\n", goal);
+        return 1; // Goal found
+    }
+
+    for (int i = 0; i < numVertices; i++) {
+        if (graph[vertex][i] && !visited[i]) {
+            if (dfs(graph, numVertices, i, visited, goal)) {
+                return 1; // Goal found in recursion
+            }
+        }
+    }
+
+    return 0; // Goal not found
+}
+
+int main() {
+    int numVertices, numEdges;
+    int graph[MAX_VERTICES][MAX_VERTICES] = {0}; // Initialize graph with 0s
+    int visited[MAX_VERTICES] = {0}; // Initialize visited array with 0s
+
+    // User input for the number of vertices and edges
+    printf("Enter the number of vertices: ");
+    scanf("%d", &numVertices);
+
+    printf("Enter the number of edges: ");
+    scanf("%d", &numEdges);
+
+    // Input edges to fill the adjacency matrix
+    printf("Enter the edges (v1 v2):\n");
+    for (int i = 0; i < numEdges; i++) {
+        int v1, v2;
+        scanf("%d %d", &v1, &v2);
+        graph[v1][v2] = 1;
+        graph[v2][v1] = 1; // Assuming an undirected graph
+    }
+
+    // User input for starting vertex and goal vertex
+    int startVertex, goalVertex;
+    printf("Enter the starting vertex for DFS: ");
+    scanf("%d", &startVertex);
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goalVertex);
+
+    // Perform DFS traversal
+    printf("DFS starting from vertex %d:\n", startVertex);
+    if (!dfs(graph, numVertices, startVertex, visited, goalVertex)) {
+        printf("\nGoal vertex %d not found in the graph.\n", goalVertex);
+    }
+
+    return 0;
+}
+
+input :
+Enter the number of vertices: 3
+Enter the number of edges: 2
+Enter the edges (v1 v2):
+0 1
+0 2
+Enter the starting vertex for DFS: 0
+Enter the goal vertex: 1
+DFS starting from vertex 0:
+0 1 
+Goal vertex 1 found.
+
+
+//BFS :
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdbool.h>
+
+#define MAX 100
+
+typedef struct {
+    int adj[MAX][MAX];
+    int num;
+} Graph;
+
+typedef struct {
+    int queue[MAX];
+    int front, rear;
+} Queue;
+
+void init(Queue *q) {
+    q->front = 0;
+    q->rear = -1;
+}
+
+bool isEmpty(Queue *q) {
+    return q->front > q->rear;
+}
+
+void enqueue(Queue *q, int n) {
+    if (q->rear < MAX - 1) {
+        q->queue[++q->rear] = n;
+    }
+}
+
+int dequeue(Queue *q) {
+    if (!isEmpty(q)) {
+        return q->queue[q->front++];
+    }
+    return -1;
+}
+
+void bfs(Graph *g, int goal) {
+    Queue q;
+    init(&q);
+    int st;
+    bool isVisited[MAX] = {false};
+
+    printf("Enter start vertex: ");
+    scanf("%d", &st);
+
+    enqueue(&q, st);
+    isVisited[st] = true;
+
+    while (!isEmpty(&q)) {
+        int cur = dequeue(&q);
+        printf("%d ", cur);
+
+        // Check if the goal is reached
+        if (cur == goal) {
+            printf("\nGoal vertex %d found.\n", goal);
+            return; // Exit BFS
+        }
+
+        for (int i = 0; i < g->num; i++) {
+            if (g->adj[cur][i] == 1 && !isVisited[i]) {
+                enqueue(&q, i);
+                isVisited[i] = true;
+            }
+        }
+    }
+
+    // If the loop completes and the goal isn't found
+    printf("\nGoal vertex %d not found in the graph.\n", goal);
+}
+
+int main() {
+    Graph g;
+
+    int edges, v1, v2, goal;
+    printf("Enter number of vertices: ");
+    scanf("%d", &g.num);
+
+    // Initialize adjacency matrix
+    for (int i = 0; i < g.num; i++) {
+        for (int j = 0; j < g.num; j++) {
+            g.adj[i][j] = 0;
+        }
+    }
+
+    printf("Enter the number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter the edges (v1 v2):\n");
+    for (int i = 0; i < edges; i++) {
+        scanf("%d %d", &v1, &v2);
+        g.adj[v1][v2] = 1;
+        g.adj[v2][v1] = 1;
+    }
+
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goal);
+
+    bfs(&g, goal);
+
+    return 0;
+}
+
+input :
+Enter number of vertices: 3
+Enter the number of edges: 2
+Enter the edges (v1 v2):
+0 1
+0 2
+Enter the goal vertex: 1
+Enter start vertex: 0
+0 1
+Goal vertex 1 found.
