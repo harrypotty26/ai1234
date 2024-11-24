@@ -1,0 +1,96 @@
+prolog1 :
+
+% Facts
+parent(john, mary).
+parent(mary, susan).
+parent(john, paul).
+parent(susan, charles).
+
+male(john).
+male(paul).
+male(charles).
+
+female(mary).
+female(susan).
+
+% Rules
+father(X, Y) :- parent(X, Y), male(X).
+mother(X, Y) :- parent(X, Y), female(X).
+grandparent(X, Y) :- parent(X, Z), parent(Z, Y).
+sibling(X, Y) :- parent(Z, X), parent(Z, Y), X \= Y.
+
+% Queries:
+% - Who is the father of Susan? -> `father(X, susan).`
+% - Who are the grandparents of Charles? -> `grandparent(X, charles).`
+
+prolog2 :
+% Facts: direct connections between cities
+direct_train(paris, lyon).
+direct_train(lyon, marseille).
+direct_train(marseille, nice).
+
+% Travel rule: X can travel to Z via Y if there is a direct train from X to Y and Y to Z
+travel(X, Y) :- direct_train(X, Y).
+travel(X, Y) :- direct_train(X, Z), travel(Z, Y).
+
+% Queries:
+% - Can I travel from Paris to Nice? -> `travel(paris, nice).`
+% - Can I travel from Lyon to Nice? -> `travel(lyon, nice).`
+
+prolog3:
+% Adding two numbers
+add(X, Y, Result) :- Result is X + Y.
+
+% Subtracting two numbers
+subtract(X, Y, Result) :- Result is X - Y.
+
+% Multiplying two numbers
+multiply(X, Y, Result) :- Result is X * Y.
+
+% Dividing two numbers
+divide(X, Y, Result) :- Y \= 0, Result is X / Y.
+
+% Queries:
+% - What is 5 + 3? -> `add(5, 3, Result).`
+% - What is 10 / 2? -> `divide(10, 2, Result).`
+
+expertsys.pl
+% Facts: Symptoms associated with diseases
+disease(flu) :- symptom(fever), symptom(cough), symptom(fatigue).
+disease(cold) :- symptom(cough), symptom(sore_throat), symptom(runny_nose).
+disease(covid) :- symptom(fever), symptom(cough), symptom(loss_of_taste), symptom(breath_shortness).
+disease(stomach_bug) :- symptom(nausea), symptom(vomiting), symptom(diarrhea).
+
+% Symptoms
+symptom(fever) :- ask('Do you have a fever?').
+symptom(cough) :- ask('Do you have a cough?').
+symptom(fatigue) :- ask('Are you feeling fatigued?').
+symptom(sore_throat) :- ask('Do you have a sore throat?').
+symptom(runny_nose) :- ask('Do you have a runny nose?').
+symptom(loss_of_taste) :- ask('Have you lost your sense of taste?').
+symptom(breath_shortness) :- ask('Are you experiencing shortness of breath?').
+symptom(nausea) :- ask('Are you feeling nauseous?').
+symptom(vomiting) :- ask('Are you experiencing vomiting?').
+symptom(diarrhea) :- ask('Are you experiencing diarrhea?').
+
+% Helper to ask questions
+ask(Question) :-
+    write(Question), nl,
+    read(Response),
+    (Response == yes -> true ; fail).
+
+% Rule to diagnose disease
+diagnose :-
+    findall(Disease, disease(Disease), Diseases),
+    (   Diseases \= []
+    ->  format('You might have: ~w~n', [Diseases])
+    ;   write('No disease detected based on the symptoms provided.') ).
+
+% Start the diagnosis process
+start :-
+    write('Answer the following questions with "yes" or "no":'), nl,
+    diagnose.
+
+
+
+
