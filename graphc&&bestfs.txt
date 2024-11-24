@@ -1,0 +1,312 @@
+graphcolor:
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_VERTICES 100  // Define a maximum number of vertices
+
+// Function to check if the current color assignment is safe for vertex v
+bool isSafe(int graph[MAX_VERTICES][MAX_VERTICES], int color[], int v, int c, int V) {
+    for (int i = 0; i < V; i++) {
+        if (graph[v][i] && color[i] == c) {
+            return false;  // An adjacent vertex has the same color
+        }
+    }
+    return true;
+}
+
+// Function to solve the graph coloring problem using backtracking
+bool graphColoringUtil(int graph[MAX_VERTICES][MAX_VERTICES], int m, int color[], int v, int V) {
+    if (v == V) {
+        return true;  // All vertices are assigned a color
+    }
+
+    for (int c = 1; c <= m; c++) {  // Try different colors
+        if (isSafe(graph, color, v, c, V)) {
+            color[v] = c;  // Assign color c to vertex v
+
+            // Recur to assign colors to the rest of the vertices
+            if (graphColoringUtil(graph, m, color, v + 1, V)) {
+                return true;
+            }
+
+            // Backtrack
+            color[v] = 0;  // Remove assigned color
+        }
+    }
+    return false;  // No valid coloring found
+}
+
+// Function to solve the m-coloring problem
+bool graphColoring(int graph[MAX_VERTICES][MAX_VERTICES], int m, int V) {
+    int color[MAX_VERTICES];  // Array to store color assignments
+    for (int i = 0; i < V; i++) {
+        color[i] = 0;  // Initialize all vertices as uncolored
+    }
+
+    if (graphColoringUtil(graph, m, color, 0, V) == false) {
+        printf("Solution does not exist\n");
+        return false;
+    }
+
+    // Print the solution
+    printf("Solution exists: Following are the assigned colors:\n");
+    for (int i = 0; i < V; i++) {
+        printf("Vertex %d ---> Color %d\n", i, color[i]);
+    }
+    return true;
+}
+
+// Driver code
+int main() {
+    int graph[MAX_VERTICES][MAX_VERTICES];
+    int V, m;
+
+    // Input the number of vertices
+    printf("Enter the number of vertices: ");
+    scanf("%d", &V);
+
+    // Input the adjacency matrix
+    printf("Enter the adjacency matrix (%d x %d):\n", V, V);
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            scanf("%d", &graph[i][j]);
+        }
+    }
+
+    // Input the number of colors
+    printf("Enter the number of colors: ");
+    scanf("%d", &m);
+
+    // Call the graph coloring function
+    graphColoring(graph, m, V);
+    return 0;
+}
+
+input :
+Enter the number of vertices: 3
+Enter the adjacency matrix (3 x 3):
+0 1 1
+1 0 1
+1 1 0
+Enter the number of colors: 3
+Solution exists: Following are the assigned colors:
+Vertex 0 ---> Color 1
+Vertex 1 ---> Color 2
+Vertex 2 ---> Color 3
+
+bestfirstsearch :
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define MAX 100
+
+typedef struct {
+    int adjMatrix[MAX][MAX];
+    int num;
+    int heuristic[MAX];
+} Graph;
+
+int getMin(int heuristics[], bool visited[], int num, int current, Graph *g) {
+    int min = 10000;
+    int minIndex = -1;
+    for (int i = 0; i < num; i++) {
+        if (!visited[i] && heuristics[i] < min && g->adjMatrix[current][i] == 1) {
+            min = heuristics[i];
+            minIndex = i;
+        }
+    }
+    return minIndex;
+}
+
+void bestFirstSearch(Graph *g, int start, int goal) {
+    bool visited[MAX] = { false };
+    int current = start;
+    visited[start] = true;
+
+    printf("Best-First Search Traversal: ");
+
+    while (current != -1) {
+        printf("%d ", current);
+
+        if (current == goal) {
+            printf("\nGoal node %d reached.\n", goal);
+            return;
+        }
+
+        int next = getMin(g->heuristic, visited, g->num, current, g);
+
+        if (next == -1) {
+            printf("\nGoal node %d not reachable.\n", goal);
+            return;
+        }
+
+        visited[next] = true;
+        current = next;
+    }
+}
+
+int main() {
+    Graph g;
+    int i, j, edges, v1, v2, start, goal;
+
+    printf("Enter the number of vertices: ");
+    scanf("%d", &g.num);
+
+    for (i = 0; i < g.num; i++) {
+        for (j = 0; j < g.num; j++) {
+            g.adjMatrix[i][j] = 0;
+        }
+    }
+
+    printf("Enter the number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter the edges (v1 v2):\n");
+    for (i = 0; i < edges; i++) {
+        scanf("%d %d", &v1, &v2);
+        g.adjMatrix[v1][v2] = 1;
+        g.adjMatrix[v2][v1] = 1;
+    }
+
+    printf("Enter heuristic values:\n");
+    for (i = 0; i < g.num; i++) {
+        printf("Heuristic value for vertex %d: ", i);
+        scanf("%d", &g.heuristic[i]);
+    }
+
+    printf("Graph:\n");
+    for (i = 0; i < g.num; i++) {
+        for (j = 0; j < g.num; j++) {
+            printf("%d ", g.adjMatrix[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("Enter the start vertex: ");
+    scanf("%d", &start);
+
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goal);
+
+    bestFirstSearch(&g, start, goal);
+
+    return 0;
+}
+
+bestfirstsearch :
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define MAX 100
+
+typedef struct {
+    int adjMatrix[MAX][MAX];
+    int num;
+    int heuristic[MAX];
+} Graph;
+
+int getMin(int heuristics[], bool visited[], int num, int current, Graph *g) {
+    int min = 10000;
+    int minIndex = -1;
+    for (int i = 0; i < num; i++) {
+        if (!visited[i] && heuristics[i] < min && g->adjMatrix[current][i] == 1) {
+            min = heuristics[i];
+            minIndex = i;
+        }
+    }
+    return minIndex;
+}
+
+void bestFirstSearch(Graph *g, int start, int goal) {
+    bool visited[MAX] = { false };
+    int current = start;
+    visited[start] = true;
+
+    printf("Best-First Search Traversal: ");
+
+    while (current != -1) {
+        printf("%d ", current);
+
+        if (current == goal) {
+            printf("\nGoal node %d reached.\n", goal);
+            return;
+        }
+
+        int next = getMin(g->heuristic, visited, g->num, current, g);
+
+        if (next == -1) {
+            printf("\nGoal node %d not reachable.\n", goal);
+            return;
+        }
+
+        visited[next] = true;
+        current = next;
+    }
+}
+
+int main() {
+    Graph g;
+    int i, j, edges, v1, v2, start, goal;
+
+    printf("Enter the number of vertices: ");
+    scanf("%d", &g.num);
+
+    for (i = 0; i < g.num; i++) {
+        for (j = 0; j < g.num; j++) {
+            g.adjMatrix[i][j] = 0;
+        }
+    }
+
+    printf("Enter the number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter the edges (v1 v2):\n");
+    for (i = 0; i < edges; i++) {
+        scanf("%d %d", &v1, &v2);
+        g.adjMatrix[v1][v2] = 1;
+        g.adjMatrix[v2][v1] = 1;
+    }
+
+    printf("Enter heuristic values:\n");
+    for (i = 0; i < g.num; i++) {
+        printf("Heuristic value for vertex %d: ", i);
+        scanf("%d", &g.heuristic[i]);
+    }
+
+    printf("Graph:\n");
+    for (i = 0; i < g.num; i++) {
+        for (j = 0; j < g.num; j++) {
+            printf("%d ", g.adjMatrix[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("Enter the start vertex: ");
+    scanf("%d", &start);
+
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goal);
+
+    bestFirstSearch(&g, start, goal);
+
+    return 0;
+}
+Enter the number of vertices: 3
+Enter the number of edges: 2
+Enter the edges (v1 v2):
+0 1
+0 2
+Enter heuristic values:
+Heuristic value for vertex 0: 0
+Heuristic value for vertex 1: 5
+Heuristic value for vertex 2: 8
+Graph:
+0 1 1
+1 0 0
+1 0 0
+Enter the start vertex: 0
+Enter the goal vertex: 2
+Best-First Search Traversal: 0 1
+Goal node 2 not reachable.
