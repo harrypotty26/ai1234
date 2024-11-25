@@ -1,0 +1,194 @@
+Breadth first search :
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_VERTICES 100
+
+typedef struct Node {
+    int vertex;
+    struct Node* next;
+} Node;
+
+typedef struct Queue {
+    Node* front;
+    Node* rear;
+} Queue;
+
+void enqueue(Queue* q, int vertex) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->vertex = vertex;
+    newNode->next = NULL;
+    if (q->rear) {
+        q->rear->next = newNode;
+    } else {
+        q->front = newNode;
+    }
+    q->rear = newNode;
+}
+
+int dequeue(Queue* q) {
+    if (!q->front) return -1;
+    Node* temp = q->front;
+    int vertex = temp->vertex;
+    q->front = q->front->next;
+    if (!q->front) {
+        q->rear = NULL;
+    }
+    free(temp);
+    return vertex;
+}
+
+int isEmpty(Queue* q) {
+    return q->front == NULL;
+}
+
+void bfs(int graph[MAX_VERTICES][MAX_VERTICES], int numVertices, int start, int goal) {
+    int visited[MAX_VERTICES] = {0};
+    Queue q = {NULL, NULL};
+
+    enqueue(&q, start);
+    visited[start] = 1;
+
+    int found = 0; // Track if the goal is found
+    while (!isEmpty(&q)) {
+        int vertex = dequeue(&q);
+        printf("%d ", vertex);
+
+        if (vertex == goal) {
+            found = 1;
+            break;
+        }
+
+        for (int i = 0; i < numVertices; i++) {
+            if (graph[vertex][i] && !visited[i]) {
+                enqueue(&q, i);
+                visited[i] = 1;
+            }
+        }
+    }
+
+    if (!found) {
+        printf("\nGoal vertex %d is not reachable from start vertex %d.\n", goal, start);
+    }
+}
+
+int main() {
+    int numVertices;
+    printf("Enter the number of vertices (max %d): ", MAX_VERTICES);
+    scanf("%d", &numVertices);
+
+    if (numVertices <= 0 || numVertices > MAX_VERTICES) {
+        printf("Invalid number of vertices. Must be between 1 and %d.\n", MAX_VERTICES);
+        return 1;
+    }
+
+    int graph[MAX_VERTICES][MAX_VERTICES] = {0};
+    printf("Enter the adjacency matrix (%d x %d):\n", numVertices, numVertices);
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            scanf("%d", &graph[i][j]);
+            if (graph[i][j] != 0 && graph[i][j] != 1) {
+                printf("Invalid adjacency matrix. Use only 0 or 1.\n");
+                return 1;
+            }
+        }
+    }
+
+    int start, goal;
+    printf("Enter the start vertex: ");
+    scanf("%d", &start);
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goal);
+
+    if (start < 0 || start >= numVertices || goal < 0 || goal >= numVertices) {
+        printf("Invalid start or goal vertex. Must be between 0 and %d.\n", numVertices - 1);
+        return 1;
+    }
+
+    printf("BFS Traversal: ");
+    bfs(graph, numVertices, start, goal);
+    printf("\n");
+
+    return 0;
+}
+
+DEPTH FIRST SEARCH :
+#include <stdio.h>
+#include <stdlib.h>
+#define MAX_VERTICES 100
+
+// Depth-First Search function
+int dfs(int graph[MAX_VERTICES][MAX_VERTICES], int numVertices, int vertex, int visited[MAX_VERTICES], int goal) {
+    printf("%d ", vertex);
+    visited[vertex] = 1;
+
+    if (vertex == goal) {
+        return 1; // Goal found
+    }
+
+    for (int i = 0; i < numVertices; i++) {
+        if (graph[vertex][i] && !visited[i]) {
+            if (dfs(graph, numVertices, i, visited, goal)) {
+                return 1; // Stop further traversal
+            }
+        }
+    }
+
+    return 0; // Goal not found in this branch
+}
+
+int main() {
+    int numVertices; // Number of vertices
+    int graph[MAX_VERTICES][MAX_VERTICES] = {0}; // Initialize adjacency matrix
+    int visited[MAX_VERTICES] = {0}; // Array to keep track of visited nodes
+
+    // Get the number of vertices
+    printf("Enter the number of vertices (max %d): ", MAX_VERTICES);
+    scanf("%d", &numVertices);
+
+    if (numVertices <= 0 || numVertices > MAX_VERTICES) {
+        printf("Invalid number of vertices. Must be between 1 and %d.\n", MAX_VERTICES);
+        return 1;
+    }
+
+    // Get the adjacency matrix
+    printf("Enter the adjacency matrix (%d x %d):\n", numVertices, numVertices);
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            scanf("%d", &graph[i][j]);
+        }
+    }
+
+    // Input validation for adjacency matrix
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            if (graph[i][j] != 0 && graph[i][j] != 1) {
+                printf("Invalid adjacency matrix. Use only 0 or 1.\n");
+                return 1;
+            }
+        }
+    }
+
+    // Get the start and goal vertices
+    int start, goal;
+    printf("Enter the start vertex: ");
+    scanf("%d", &start);
+    printf("Enter the goal vertex: ");
+    scanf("%d", &goal);
+
+    // Validate start and goal vertices
+    if (start < 0 || start >= numVertices || goal < 0 || goal >= numVertices) {
+        printf("Invalid start or goal vertex. Must be between 0 and %d.\n", numVertices - 1);
+        return 1;
+    }
+
+    // Perform DFS
+    printf("DFS Traversal: ");
+    if (!dfs(graph, numVertices, start, visited, goal)) {
+        printf("\nGoal vertex %d not reachable from start vertex %d.\n", goal, start);
+    }
+    printf("\n");
+
+    return 0;
+}
