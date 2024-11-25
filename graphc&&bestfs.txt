@@ -96,32 +96,36 @@ Vertex 2 ---> Color 3
 
 bestfirstsearch :
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 #define MAX 100
 
+// Structure for the Graph
 typedef struct {
-    int adjMatrix[MAX][MAX];
-    int num;
-    int heuristic[MAX];
+    int adjMatrix[MAX][MAX]; // Adjacency matrix
+    int num;                 // Number of vertices
+    int heuristic[MAX];      // Heuristic values for each vertex
 } Graph;
 
+// Function to find the next vertex with the smallest heuristic value
 int getMin(int heuristics[], bool visited[], int num, int current, Graph *g) {
-    int min = 10000;
+    int min = 10000; // A large value to simulate infinity
     int minIndex = -1;
+
     for (int i = 0; i < num; i++) {
         if (!visited[i] && heuristics[i] < min && g->adjMatrix[current][i] == 1) {
             min = heuristics[i];
             minIndex = i;
         }
     }
+
     return minIndex;
 }
 
+// Best-First Search (BFS) algorithm
 void bestFirstSearch(Graph *g, int start, int goal) {
-    bool visited[MAX] = { false };
-    int current = start;
+    bool visited[MAX] = { false }; // Track visited vertices
+    int current = start;          // Start from the initial vertex
     visited[start] = true;
 
     printf("Best-First Search Traversal: ");
@@ -129,13 +133,16 @@ void bestFirstSearch(Graph *g, int start, int goal) {
     while (current != -1) {
         printf("%d ", current);
 
+        // Check if the goal node is reached
         if (current == goal) {
             printf("\nGoal node %d reached.\n", goal);
             return;
         }
 
+        // Find the next vertex based on the smallest heuristic value
         int next = getMin(g->heuristic, visited, g->num, current, g);
 
+        // If no unvisited neighbor is found, the goal is not reachable
         if (next == -1) {
             printf("\nGoal node %d not reachable.\n", goal);
             return;
@@ -148,165 +155,56 @@ void bestFirstSearch(Graph *g, int start, int goal) {
 
 int main() {
     Graph g;
-    int i, j, edges, v1, v2, start, goal;
+    int i, j, start, goal;
 
+    // Input the number of vertices
     printf("Enter the number of vertices: ");
     scanf("%d", &g.num);
 
+    if (g.num <= 0 || g.num > MAX) {
+        printf("Invalid number of vertices. Must be between 1 and %d.\n", MAX);
+        return 1;
+    }
+
+    // Input the adjacency matrix
+    printf("Enter the adjacency matrix:\n");
     for (i = 0; i < g.num; i++) {
         for (j = 0; j < g.num; j++) {
-            g.adjMatrix[i][j] = 0;
+            scanf("%d", &g.adjMatrix[i][j]);
+            // Ensure that only valid adjacency values (0 or 1) are entered
+            if (g.adjMatrix[i][j] != 0 && g.adjMatrix[i][j] != 1) {
+                printf("Invalid input for adjacency matrix. Only 0 or 1 allowed.\n");
+                return 1;
+            }
         }
     }
 
-    printf("Enter the number of edges: ");
-    scanf("%d", &edges);
-
-    printf("Enter the edges (v1 v2):\n");
-    for (i = 0; i < edges; i++) {
-        scanf("%d %d", &v1, &v2);
-        g.adjMatrix[v1][v2] = 1;
-        g.adjMatrix[v2][v1] = 1;
-    }
-
+    // Input heuristic values for each vertex
     printf("Enter heuristic values:\n");
     for (i = 0; i < g.num; i++) {
         printf("Heuristic value for vertex %d: ", i);
         scanf("%d", &g.heuristic[i]);
-    }
-
-    printf("Graph:\n");
-    for (i = 0; i < g.num; i++) {
-        for (j = 0; j < g.num; j++) {
-            printf("%d ", g.adjMatrix[i][j]);
+        // Ensure heuristic values are non-negative
+        if (g.heuristic[i] < 0) {
+            printf("Heuristic values must be non-negative.\n");
+            return 1;
         }
-        printf("\n");
     }
 
+    // Input the start and goal vertices
     printf("Enter the start vertex: ");
     scanf("%d", &start);
-
     printf("Enter the goal vertex: ");
     scanf("%d", &goal);
 
+    // Validate the start and goal vertices
+    if (start < 0 || start >= g.num || goal < 0 || goal >= g.num) {
+        printf("Invalid start or goal vertex. Must be between 0 and %d.\n", g.num - 1);
+        return 1;
+    }
+
+    // Perform the Best-First Search
     bestFirstSearch(&g, start, goal);
 
     return 0;
 }
-
-bestfirstsearch :
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
-#define MAX 100
-
-typedef struct {
-    int adjMatrix[MAX][MAX];
-    int num;
-    int heuristic[MAX];
-} Graph;
-
-int getMin(int heuristics[], bool visited[], int num, int current, Graph *g) {
-    int min = 10000;
-    int minIndex = -1;
-    for (int i = 0; i < num; i++) {
-        if (!visited[i] && heuristics[i] < min && g->adjMatrix[current][i] == 1) {
-            min = heuristics[i];
-            minIndex = i;
-        }
-    }
-    return minIndex;
-}
-
-void bestFirstSearch(Graph *g, int start, int goal) {
-    bool visited[MAX] = { false };
-    int current = start;
-    visited[start] = true;
-
-    printf("Best-First Search Traversal: ");
-
-    while (current != -1) {
-        printf("%d ", current);
-
-        if (current == goal) {
-            printf("\nGoal node %d reached.\n", goal);
-            return;
-        }
-
-        int next = getMin(g->heuristic, visited, g->num, current, g);
-
-        if (next == -1) {
-            printf("\nGoal node %d not reachable.\n", goal);
-            return;
-        }
-
-        visited[next] = true;
-        current = next;
-    }
-}
-
-int main() {
-    Graph g;
-    int i, j, edges, v1, v2, start, goal;
-
-    printf("Enter the number of vertices: ");
-    scanf("%d", &g.num);
-
-    for (i = 0; i < g.num; i++) {
-        for (j = 0; j < g.num; j++) {
-            g.adjMatrix[i][j] = 0;
-        }
-    }
-
-    printf("Enter the number of edges: ");
-    scanf("%d", &edges);
-
-    printf("Enter the edges (v1 v2):\n");
-    for (i = 0; i < edges; i++) {
-        scanf("%d %d", &v1, &v2);
-        g.adjMatrix[v1][v2] = 1;
-        g.adjMatrix[v2][v1] = 1;
-    }
-
-    printf("Enter heuristic values:\n");
-    for (i = 0; i < g.num; i++) {
-        printf("Heuristic value for vertex %d: ", i);
-        scanf("%d", &g.heuristic[i]);
-    }
-
-    printf("Graph:\n");
-    for (i = 0; i < g.num; i++) {
-        for (j = 0; j < g.num; j++) {
-            printf("%d ", g.adjMatrix[i][j]);
-        }
-        printf("\n");
-    }
-
-    printf("Enter the start vertex: ");
-    scanf("%d", &start);
-
-    printf("Enter the goal vertex: ");
-    scanf("%d", &goal);
-
-    bestFirstSearch(&g, start, goal);
-
-    return 0;
-}
-Enter the number of vertices: 3
-Enter the number of edges: 2
-Enter the edges (v1 v2):
-0 1
-0 2
-Enter heuristic values:
-Heuristic value for vertex 0: 0
-Heuristic value for vertex 1: 5
-Heuristic value for vertex 2: 8
-Graph:
-0 1 1
-1 0 0
-1 0 0
-Enter the start vertex: 0
-Enter the goal vertex: 2
-Best-First Search Traversal: 0 1
-Goal node 2 not reachable.
