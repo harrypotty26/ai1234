@@ -2,157 +2,221 @@ ASTAR
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <string.h>
 #include <limits.h>
+#include <math.h>
 
-#define MAX_NODES 100
-#define INF INT_MAX
+typedef struct Edge Edge;
+typedef struct Node Node;
 
-// Priority Queue Structure
-typedef struct {
-    int node;
-    int cost;
-} Element;
+struct Edge {
+    Node* target;
+    double cost;
+};
 
-typedef struct {
-    Element elements[MAX_NODES * MAX_NODES];
-    int size;
-} PriorityQueue;
+struct Node {
+    char name[3]; // To hold node names (e.g., A, B)
+    Edge* neighbors;
+    int neighborCount;
+    double gCost; // Cost from start to this node
+    double hCost; // Heuristic cost to the goal
+    Node* parent;
+};
 
-void initPriorityQueue(PriorityQueue *pq) {
-    pq->size = 0;
-}
-
-bool isEmpty(PriorityQueue *pq) {
-    return pq->size == 0;
-}
-
-void push(PriorityQueue *pq, int node, int cost) {
-    pq->elements[pq->size].node = node;
-    pq->elements[pq->size].cost = cost;
-    pq->size++;
-}
-
-Element pop(PriorityQueue *pq) {
-    int minIndex = 0;
-    for (int i = 1; i < pq->size; i++) {
-        if (pq->elements[i].cost < pq->elements[minIndex].cost) {
-            minIndex = i;
-        }
+// Initialize a node with its name and heuristic cost
+Node* createNode(const char* name, double hCost) {
+    Node* node = (Node*)malloc(sizeof(Node));
+    if (!node) {
+        printf("Memory allocation failed.\n");
+        exit(1);
     }
-    Element result = pq->elements[minIndex];
-    pq->elements[minIndex] = pq->elements[pq->size - 1];
-    pq->size--;
-    return result;
+    strcpy(node->name, name);
+    node->hCost = hCost;
+    node->gCost = INFINITY;
+    node->neighbors = NULL;
+    node->neighborCount = 0;
+    node->parent = NULL;
+    return node;
 }
 
-// Reconstruct and print the path
-void reconstructPath(int parent[], int goal) {
-    int path[MAX_NODES];
-    int length = 0;
-    int current = goal;
-
-    while (current != -1) {
-        path[length++] = current;
-        current = parent[current];
+// Add an edge between two nodes
+void addEdge(Node* from, Node* to, double cost) {
+    from->neighbors = realloc(from->neighbors, sizeof(Edge) * (from->neighborCount + 1));
+    if (!from->neighbors) {
+        printf("Memory allocation failed.\n");
+        exit(1);
     }
-
-    printf("Path: ");
-    for (int i = length - 1; i >= 0; i--) {
-        printf("%d ", path[i]);
-    }
-    printf("\n");
+    from->neighbors[from->neighborCount].target = to;
+    from->neighbors[from->neighborCount].cost = cost;
+    from->neighborCount++;
 }
 
-// A* Algorithm
-void astar(int adj[MAX_NODES][MAX_NODES], int weights[MAX_NODES][MAX_NODES], int h[], int start, int goal, int n) {
-    int g[MAX_NODES];
-    bool visited[MAX_NODES] = {false};
-    int parent[MAX_NODES];
-    PriorityQueue pq;
+// Reconstruct the path from the goal node
+void reconstructPath(Node* goal) {
+    if (goal == NULL) return;
+    reconstructPath(goal->parent);
+    printf("%s ", goal->name);
+}
 
-    initPriorityQueue(&pq);
-    for (int i = 0; i < n; i++) {
-        g[i] = INF;
-        parent[i] = -1;
-    }
+// Function to compare fCost for the priority queue
+int compareNodes(const void* a, const void* b) {
+    Node* nodeA = (Node*)a;
+    Node* nodeB = (Node*)b;
+    double fCostA = nodeA->gCost + nodeA->hCost;
+    double fCostB = nodeB->gCost + nodeB->hCost;
+    return (fCostA > fCostB) - (fCostA < fCostB);
+}
 
-    g[start] = 0;
-    push(&pq, start, h[start]);
+// A* algorithm implementation
+void aStar(Node* start, Node* goal) {
+    Node* openList[100]; // Priority queue for open list
+    int openListSize = 0;
+    Node* closedList[100];
+    int closedListSize = 0;
 
-    while (!isEmpty(&pq)) {
-        Element current = pop(&pq);
-        int node = current.node;
+    start->gCost = 0;
+    openList[openListSize++] = start;
 
-        if (visited[node]) continue;
-        visited[node] = true;
+    while (openListSize > 0) {
+        qsort(openList, openListSize, sizeof(Node*), compareNodes);
+        Node* current = openList[0];
 
-        if (node == goal) {
-            reconstructPath(parent, goal);
+        // If the goal node is reached
+        if (current == goal) {
+            printf("Path found: ");
+            reconstructPath(goal);
+            printf("\nTotal cost: %.2lf\n", goal->gCost);
             return;
         }
 
-        for (int i = 0; i < n; i++) {
-            if (adj[node][i] && !visited[i] && g[node] + weights[node][i] < g[i]) {
-                g[i] = g[node] + weights[node][i];
-                parent[i] = node;
-                push(&pq, i, g[i] + h[i]);
+        // Remove current node from openList
+        for (int i = 1; i < openListSize; i++) {
+            openList[i - 1] = openList[i];
+        }
+        openListSize--;
+
+        closedList[closedListSize++] = current;
+
+        // Explore neighbors
+        for (int i = 0; i < current->neighborCount; i++) {
+            Node* neighbor = current->neighbors[i].target;
+            double tentativeGCost = current->gCost + current->neighbors[i].cost;
+
+            int inClosedList = 0;
+            for (int j = 0; j < closedListSize; j++) {
+                if (closedList[j] == neighbor) {
+                    inClosedList = 1;
+                    break;
+                }
+            }
+            if (inClosedList) continue;
+
+            if (tentativeGCost < neighbor->gCost) {
+                neighbor->gCost = tentativeGCost;
+                neighbor->parent = current;
+
+                int inOpenList = 0;
+                for (int j = 0; j < openListSize; j++) {
+                    if (openList[j] == neighbor) {
+                        inOpenList = 1;
+                        break;
+                    }
+                }
+                if (!inOpenList) {
+                    openList[openListSize++] = neighbor;
+                }
+            }
+        }
+    }
+    printf("No path found.\n");
+}
+
+int main() {
+    int numNodes;
+    printf("Enter the number of nodes: ");
+    scanf("%d", &numNodes);
+
+    // Allocate memory for nodes
+    Node* nodes[numNodes];
+
+    // Input node names and heuristic values
+    for (int i = 0; i < numNodes; i++) {
+        char name[3];
+        double hCost;
+        printf("Enter name and heuristic value for node %d (e.g., A 10): ", i + 1);
+        scanf("%s %lf", name, &hCost);
+        nodes[i] = createNode(name, hCost);
+    }
+
+    // Input adjacency matrix
+    printf("Enter the adjacency matrix (cost 0 for no edge):\n");
+    for (int i = 0; i < numNodes; i++) {
+        for (int j = 0; j < numNodes; j++) {
+            double cost;
+            scanf("%lf", &cost);
+            if (cost > 0) {
+                addEdge(nodes[i], nodes[j], cost);
             }
         }
     }
 
-    printf("No path exists from %d to %d\n", start, goal);
-}
+    // Input start and goal nodes
+    char startName[3], goalName[3];
+    printf("Enter the start node: ");
+    scanf("%s", startName);
+    printf("Enter the goal node: ");
+    scanf("%s", goalName);
 
-int main() {
-    int n, e;
-    int adj[MAX_NODES][MAX_NODES] = {0};
-    int weights[MAX_NODES][MAX_NODES] = {0};
-    int h[MAX_NODES];
+    Node* start = NULL;
+    Node* goal = NULL;
 
-    printf("Enter the number of nodes and edges: ");
-    scanf("%d %d", &n, &e);
-
-    printf("Enter the edges (u v weight):\n");
-    for (int i = 0; i < e; i++) {
-        int u, v, w;
-        scanf("%d %d %d", &u, &v, &w);
-        adj[u][v] = 1;
-        adj[v][u] = 1; // Comment for directed graph
-        weights[u][v] = w;
-        weights[v][u] = w; // Comment for directed graph
+    for (int i = 0; i < numNodes; i++) {
+        if (strcmp(nodes[i]->name, startName) == 0) {
+            start = nodes[i];
+        }
+        if (strcmp(nodes[i]->name, goalName) == 0) {
+            goal = nodes[i];
+        }
     }
 
-    printf("Enter the heuristic values of the nodes:\n");
-    for (int i = 0; i < n; i++) {
-        scanf("%d", &h[i]);
+    if (!start || !goal) {
+        printf("Invalid start or goal node.\n");
+        for (int i = 0; i < numNodes; i++) {
+            free(nodes[i]->neighbors);
+            free(nodes[i]);
+        }
+        return 1;
     }
 
-    int start, goal;
-    printf("Enter start node: ");
-    scanf("%d", &start);
-    printf("Enter goal node: ");
-    scanf("%d", &goal);
+    // Run A* algorithm
+    aStar(start, goal);
 
-    astar(adj, weights, h, start, goal, n);
+    // Free memory
+    for (int i = 0; i < numNodes; i++) {
+        free(nodes[i]->neighbors);
+        free(nodes[i]);
+    }
 
     return 0;
-}
+} 
 
 input:
-Enter the number of nodes and edges: 5 6
-Enter the edges (u v weight):
-0 1 2
-0 2 4
-1 2 1
-1 3 7
-2 4 3
-3 4 1
-Enter the heuristic values of the nodes:
-7 6 2 1 0
-Enter start node: 0
-Enter goal node: 4
-Path: 0 2 4
+Enter the number of nodes: 5
+Enter name and heuristic value for node 1 (e.g., A 10): A 10
+Enter name and heuristic value for node 2 (e.g., A 10): B 5
+Enter name and heuristic value for node 3 (e.g., A 10): C 3
+Enter name and heuristic value for node 4 (e.g., A 10): D 7
+Enter name and heuristic value for node 5 (e.g., A 10): E 0
+Enter the adjacency matrix (cost 0 for no edge):
+0 2 0 1 0
+2 0 3 2 0
+0 3 0 0 4
+1 2 0 0 5
+0 0 4 5 0
+Enter the start node: A
+Enter the goal node: E
+Path found: A D E
+Total cost: 6.00
 
 AOSTAR
 
